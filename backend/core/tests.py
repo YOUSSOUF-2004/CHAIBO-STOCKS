@@ -36,6 +36,14 @@ class ApiTests(TestCase):
         return decide_deposit(op.pk,self.admin)
     def csrf(self,client):
         return {'HTTP_X_CSRFTOKEN':client.get('/api/csrf/').data['csrfToken']}
+    def test_public_health_and_database_failure(self):
+        from unittest.mock import patch
+        self.assertEqual(self.client.get('/api/health/').status_code,200)
+        with patch('django.db.connection.cursor',side_effect=RuntimeError('test database unavailable')):
+            response=self.client.get('/api/health/')
+            self.assertEqual(response.status_code,503)
+            self.assertEqual(response.data,{'status':'unavailable'})
+
     def test_register_and_no_privilege_escalation(self):
         result=self.client.post('/api/auth/register/',{'phone':'66 00 00 04','name':'New Client','password':PASSWORD,'role':'admin'},format='json')
         self.assertEqual(result.status_code,400)

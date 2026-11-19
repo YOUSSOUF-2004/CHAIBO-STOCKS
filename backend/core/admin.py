@@ -75,3 +75,15 @@ class ProtectedAdminLoginForm(AdminAuthenticationForm):
         return super().clean()
 
 admin.site.login_form = ProtectedAdminLoginForm
+
+from .models import ContactMessage
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ['subject','name','email','status','notification_sent','created_at']
+    list_filter = ['status','notification_sent','created_at']
+    search_fields = ['name','email','subject','message']
+    readonly_fields = ['id','request_id','user','name','email','subject','message','notification_sent','created_at']
+    fields = readonly_fields + ['status','internal_notes']
+    def has_add_permission(self,request):
+        return False

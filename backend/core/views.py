@@ -205,3 +205,35 @@ class PasswordResetConfirmView(APIView):
         user.set_password(password)
         user.save(update_fields=['password'])
         return Response({'detail':'Mot de passe modifié. Reconnectez-vous.'})
+
+
+class HealthView(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        from django.db import connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT 1')
+            return Response({'status':'ok'})
+        except Exception:
+            return Response({'status':'unavailable'},status=503)
+
+@method_decorator(csrf_protect,name='dispatch')
+class ContactView(APIView):
+    permission_classes = [AllowAny]
+    throttle_scope = 'contact'
+    def post(self,request):
+        from .models import ContactMessage
+        from .serializers import ContactSerializer
+        from .contact import notify_support
+        serializer = ContactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = dict(serializer.validated_data)
+        data.pop('website',None)
+        with transaction.atomic():
+            message,created = ContactMessage.objects.get_or_create(request_id=data['request_id'],defaults={**data,'user':request.user if request.user.is_authenticated else None})
+            if any(getattr(message,field)!=data[field] for field in ['name','email','subject','message']):
+                raise ValidationError('Cet identifiant correspond à un autre envoi. Rechargez le formulaire.')
+            if created:
+                transaction.on_commit(lambda: notify_support(message.pk))
+        return Response({'id':str(message.pk),'detail':'Votre message a été enregistré. Conservez cette référence pour votre suivi.'},status=201 if created else 200)

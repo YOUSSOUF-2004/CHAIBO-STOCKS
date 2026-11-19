@@ -209,3 +209,15 @@ Cette archive constitue une base applicative testée ; le serveur de développem
 Les écritures financières sont produites par les services métier uniquement, avec contraintes de base, verrous PostgreSQL et journal d’écritures. Les soldes, opérations et écritures sont consultables mais non éditables directement dans Django Admin.
 
 Note sur `check --deploy` : l’avertissement `security.W021` concernant la liste HSTS preload est volontaire. Le préchargement HSTS nécessite une décision liée au domaine et à ses sous-domaines ; il n’est pas activé automatiquement par ce projet. HTTPS, HSTS et les cookies Secure restent activés avec `DJANGO_DEBUG=0`.
+
+## Workflow GitHub Actions de production
+
+Le workflow est fourni dans `.github/workflows/deploy.yml`, avec `compose.production.yaml` et le script `deploy/release.sh`. Le guide complet des secrets GitHub, du VPS, de Nginx et du premier déploiement se trouve dans **`deploy/README.md`**. Aucun déploiement vers un VPS n’a été exécuté depuis cette conversation : il faut d’abord configurer votre dépôt et votre serveur.
+
+## Formulaire de contact et WhatsApp
+
+La page `/#/contact` enregistre les demandes dans PostgreSQL et peut notifier le support par e-mail. Les demandes sont consultables dans **Django Admin → Messages de contact**. Le bouton WhatsApp utilise le numéro de support configuré. Les instructions de mise à jour, la configuration SMTP et les fichiers concernés sont détaillés dans **MISE_A_JOUR_CONTACT.md**.
+
+## Hébergement Render + Supabase
+
+Voir **DEPLOIEMENT_RENDER.md** pour le déploiement gratuit de test. Utiliser `Dockerfile.render` à la racine, qui compile React et exécute Django sur une même origine HTTPS. La configuration VPS précédente reste séparée.

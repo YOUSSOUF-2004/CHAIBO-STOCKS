@@ -75,6 +75,7 @@ async function click(label) {
 }
 const all = [
   ["/accueil", null, "Votre compte."],
+  ["/contact",null,"Contactez notre équipe"],
   ["/connexion", null, "Heureux de vous revoir"],
   ["/inscription", null, "Créer un compte"],
   ["/oublie", null, "Mot de passe oublié"],

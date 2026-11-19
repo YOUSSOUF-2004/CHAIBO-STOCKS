@@ -66,3 +66,52 @@ LOGGING = {'version':1,'disable_existing_loggers':False,'handlers':{'console':{'
 # Ignore spoofed forwarded addresses unless the deployment explicitly trusts its proxy.
 REST_FRAMEWORK["NUM_PROXIES"] = 1 if TRUST_PROXY else 0
 CSRF_FAILURE_VIEW = "core.errors.csrf_failure"
+
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL","youssoufchaiboabakaradam@gmail.com")
+EMAIL_TIMEOUT = 10
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["contact"] = "5/hour"
+
+# Render: one HTTPS origin for React, Django and authenticated API requests.
+IS_RENDER = os.getenv('CHAIBO_RENDER','0') == '1'
+FRONTEND_DIST = Path(os.getenv('FRONTEND_DIST', str(BASE_DIR / 'frontend_dist')))
+if FRONTEND_DIST.is_dir():
+    WHITENOISE_ROOT = str(FRONTEND_DIST)
+if IS_RENDER:
+    if DEBUG:
+        raise ImproperlyConfigured('DJANGO_DEBUG doit être 0 sur Render.')
+    render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME','').strip()
+    if render_hostname:
+        if render_hostname not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(render_hostname)
+        if 'https://'+render_hostname not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append('https://'+render_hostname)
+        if not os.getenv('FRONTEND_URL'):
+            FRONTEND_URL = 'https://'+render_hostname
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO','https')
+    TRUST_PROXY = True
+    REST_FRAMEWORK['NUM_PROXIES'] = 1
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND','core.email_backends.BrevoEmailBackend')
+
+# Optional hosted PostgreSQL connection string. Never commit its real value.
+if os.getenv('DATABASE_URL'):
+    from urllib.parse import urlsplit,unquote,parse_qs
+    parsed = urlsplit(os.environ['DATABASE_URL'])
+    if parsed.scheme not in ['postgres','postgresql'] or not parsed.hostname or not parsed.path.strip('/'):
+        raise ImproperlyConfigured('DATABASE_URL doit désigner une base PostgreSQL valide.')
+    DATABASES['default'].update({'NAME':unquote(parsed.path.lstrip('/')),'USER':unquote(parsed.username or ''),'PASSWORD':unquote(parsed.password or ''),'HOST':parsed.hostname,'PORT':str(parsed.port or 5432)})
+ssl_mode = os.getenv('POSTGRES_SSLMODE','require' if IS_RENDER else 'prefer')
+if IS_RENDER and ssl_mode not in ['require','verify-ca','verify-full']:
+    raise ImproperlyConfigured('Une connexion PostgreSQL TLS est obligatoire sur Render.')
+DATABASES['default']['OPTIONS'] = {'sslmode':ssl_mode}
+# Keep Django's financial tables outside Supabase's exposed public schema.
+CHAIBO_DB_SCHEMA = 'chaibo_private' if IS_RENDER else ''
+
+if os.getenv('MEDIA_STORAGE','local') == 's3':
+    needed = ['S3_ENDPOINT_URL','S3_ACCESS_KEY_ID','S3_SECRET_ACCESS_KEY','S3_BUCKET_NAME','S3_REGION_NAME']
+    if any(not os.getenv(name) for name in needed):
+        raise ImproperlyConfigured('Configurer les cinq variables S3 du stockage privé.')
+    if not os.environ['S3_ENDPOINT_URL'].startswith('https://'):
+        raise ImproperlyConfigured('Le stockage privé doit utiliser HTTPS.')
+    STORAGES['default'] = {'BACKEND':'storages.backends.s3.S3Storage','OPTIONS':{'endpoint_url':os.environ['S3_ENDPOINT_URL'],'access_key':os.environ['S3_ACCESS_KEY_ID'],'secret_key':os.environ['S3_SECRET_ACCESS_KEY'],'bucket_name':os.environ['S3_BUCKET_NAME'],'region_name':os.environ['S3_REGION_NAME'],'addressing_style':'path','signature_version':'s3v4','default_acl':None,'file_overwrite':False,'querystring_auth':True}}
+elif IS_RENDER:
+    raise ImproperlyConfigured('Render utilise un disque temporaire : configurer MEDIA_STORAGE=s3 pour conserver les photos.')

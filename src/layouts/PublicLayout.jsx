@@ -1,3 +1,8 @@
+import {
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  WHATSAPP_URL,
+} from "../services/support";
 import { API_MODE } from "../services/api";
 import React from "react";
 import { ArrowUpRight, ShieldCheck, User, Menu } from "lucide-react";
@@ -22,9 +27,19 @@ export default function PublicLayout() {
             <a
               className={active && id === "accueil" ? "active" : ""}
               key={id}
-              href={id === "accueil" ? "#accueil" : "#" + id}
+              href={
+                id === "contact"
+                  ? "#/contact"
+                  : id === "accueil"
+                    ? "#/accueil"
+                    : "#/accueil"
+              }
               onClick={(e) => {
                 e.preventDefault();
+                if (id === "contact") {
+                  go("contact");
+                  return;
+                }
                 if (!active) {
                   go("accueil");
                   setTimeout(
@@ -66,7 +81,7 @@ export default function PublicLayout() {
         </div>
       </header>
       <Outlet />
-      <footer className="site-footer" id="contact">
+      <footer className="site-footer" id="site-contact">
         <div className="footer-top">
           <div>
             <Logo />
@@ -117,14 +132,13 @@ export default function PublicLayout() {
           </div>
           <div>
             <b>Restons en contact</b>
-            <a href="mailto:support@chaibo-stock.com">
-              support@chaibo-stock.com
+            <Link to="/contact">Formulaire de contact</Link>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+              Support WhatsApp
             </a>
-           <a href="mailto:youssoufchaiboabakaradam@gmail.com">
-               youssoufchaiboabakaradam@gmail.com
-           </a>
-            <a href="tel:+23566112233">+235 66 00 96 95</a>
-            <span>N’Djaména, Abéche , Tchad</span>
+            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+            <a href={`tel:+${SUPPORT_PHONE}`}>+{SUPPORT_PHONE}</a>
+            <span>N’Djaména, Tchad</span>
           </div>
           <div className="footer-message">
             <ShieldCheck size={28} />
@@ -137,7 +151,7 @@ export default function PublicLayout() {
         </div>
         <div className="footer-bottom">
           <span>© 2026 CHAIBO STOCK. Tous droits réservés.</span>
-          <span>Réaliser par ing. YOUSSOUF CHAIBO</span>
+          <span>Prototype interactif · React</span>
         </div>
       </footer>
     </>

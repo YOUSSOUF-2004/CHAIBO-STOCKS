@@ -109,3 +109,26 @@ class LoginWindow(models.Model):
     key = models.CharField(max_length=64, primary_key=True)
     started_at = models.DateTimeField()
     attempts = models.PositiveIntegerField(default=0)
+
+class ContactMessage(models.Model):
+    class Status(models.TextChoices):
+        NEW = 'new', 'Nouveau'
+        IN_PROGRESS = 'in_progress', 'En cours'
+        CLOSED = 'closed', 'Traité'
+    id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    request_id = models.UUIDField(unique=True)
+    user = models.ForeignKey(User,null=True,blank=True,on_delete=models.SET_NULL,related_name='contact_messages')
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    subject = models.CharField(max_length=150)
+    message = models.TextField(max_length=4000)
+    status = models.CharField(max_length=20,choices=Status.choices,default=Status.NEW)
+    internal_notes = models.TextField(blank=True)
+    notification_sent = models.BooleanField(default=False,verbose_name="Notification traitée par le service e-mail")
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'message de contact'
+        verbose_name_plural = 'messages de contact'
+    def __str__(self):
+        return f'{self.subject} — {self.name}'

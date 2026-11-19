@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useApp } from "./context/AppContext";
 import PublicLayout from "./layouts/PublicLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
+import Contact from "./pages/Contact";
 import Accueil from "./pages/Accueil";
 import TableauDeBord from "./pages/client/TableauDeBord";
 import Transfert from "./pages/client/Transfert";
@@ -50,6 +51,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Navigate to="/accueil" replace />} />
       <Route element={<PublicLayout />}>
         <Route path="/accueil" element={<Accueil />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/connexion" element={<Connexion />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="/oublie" element={<MotDePasseOublie />} />

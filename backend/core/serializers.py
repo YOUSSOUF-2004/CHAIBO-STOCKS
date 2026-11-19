@@ -140,3 +140,15 @@ class OperationSerializer(serializers.ModelSerializer):
         model = Operation
         fields = ['id','owner_name','owner_phone','recipient_name','kind','kind_label','amount','direction','status','status_label','reference','created_at','validated_at']
         read_only_fields = fields
+
+class ContactSerializer(serializers.Serializer):
+    request_id = serializers.UUIDField()
+    name = serializers.CharField(max_length=150)
+    email = serializers.EmailField(max_length=254)
+    subject = serializers.CharField(max_length=150)
+    message = serializers.CharField(min_length=10,max_length=4000)
+    website = serializers.CharField(required=False,allow_blank=True,write_only=True)
+    def validate_website(self,value):
+        if value:
+            raise serializers.ValidationError('Envoi refusé.')
+        return value

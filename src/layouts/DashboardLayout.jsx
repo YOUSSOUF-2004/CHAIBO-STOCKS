@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import Avatar from "../components/Avatar";
+import { WHATSAPP_URL } from "../services/support";
 import Logo from "../components/Logo";
 import { Link, Outlet } from "react-router-dom";
 export default function DashboardLayout() {
@@ -56,8 +57,16 @@ export default function DashboardLayout() {
             <Headphones />
             <b>Besoin d’aide ?</b>
             <p>Notre équipe vous accompagne.</p>
-            <a href="mailto:support@chaibo-stock.com">
+            <Link to="/contact">
               Contacter le support <ArrowUpRight size={14} />
+            </Link>
+            <a
+              className="support-whatsapp"
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp
             </a>
           </div>
           <button
