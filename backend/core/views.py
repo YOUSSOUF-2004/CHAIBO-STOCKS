@@ -86,6 +86,8 @@ class ProfileView(APIView):
 
 class PhotoView(APIView):
     def get(self, request, pk):
+        if not settings.PHOTOS_ENABLED:
+            return Response(status=404)
         if request.user.pk != pk and not request.user.is_staff:
             raise PermissionDenied()
         user = get_object_or_404(User,pk=pk)
@@ -167,6 +169,8 @@ class PasswordResetView(APIView):
     permission_classes = [AllowAny]
     throttle_scope = 'auth'
     def post(self, request):
+        if not settings.MESSAGING_ENABLED:
+            return Response({'detail':'La réinitialisation par e-mail est temporairement indisponible.'},status=503)
         field = serializers.EmailField()
         email = field.run_validation(request.data.get('email'))
         for user in User.objects.filter(email__iexact=email,is_active=True):
@@ -223,6 +227,8 @@ class ContactView(APIView):
     permission_classes = [AllowAny]
     throttle_scope = 'contact'
     def post(self,request):
+        if not settings.MESSAGING_ENABLED:
+            return Response({'detail':'La messagerie est temporairement indisponible.'},status=503)
         from .models import ContactMessage
         from .serializers import ContactSerializer
         from .contact import notify_support

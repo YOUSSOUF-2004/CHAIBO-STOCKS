@@ -2,7 +2,7 @@ import {build} from 'esbuild';import React from 'react';import assert from 'node
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 globalThis.FormData=class{constructor(values){this.values=values;}get(k){return this.values[k]??''}};
 let requests=[],fail=true;globalThis.fetch=async(url,options={})=>{if(url==='/api/csrf/')return{ok:true,json:async()=>({csrfToken:'csrf-test'})};requests.push(JSON.parse(options.body));if(fail)throw Error('Network lost');return{ok:true,status:201,json:async()=>({id:'receipt-example',detail:'Votre message a été enregistré.'})};};
-await build({entryPoints:['src/pages/Contact.jsx'],bundle:true,platform:'node',format:'esm',packages:'external',define:{'import.meta.env.VITE_API_MODE':'"api"'},outfile:'node_modules/.cache/contact-test.mjs'});
+await build({entryPoints:['src/pages/Contact.jsx'],bundle:true,platform:'node',format:'esm',packages:'external',define:{'import.meta.env.VITE_PHOTOS_ENABLED':'"1"','import.meta.env.VITE_MESSAGING_ENABLED':'"1"','import.meta.env.VITE_API_MODE':'"api"'},outfile:'node_modules/.cache/contact-test.mjs'});
 const{default:Contact}=await import('../node_modules/.cache/contact-test.mjs');let view;await act(()=>{view=create(React.createElement(MemoryRouter,null,React.createElement(Contact)))});
 const values={name:'Client',email:'client@example.test',subject:'Une question',message:'Bonjour, je souhaite contacter votre service.',website:''};let reset=0;
 async function submit(){await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){},currentTarget:{...values,reset(){reset++}}}));}

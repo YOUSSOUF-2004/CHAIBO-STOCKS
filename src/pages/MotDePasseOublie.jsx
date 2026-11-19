@@ -1,3 +1,4 @@
+import { MESSAGING_ENABLED } from "../services/features";
 import React, { useState } from "react";
 import { API_MODE, api } from "../services/api";
 import { useApp } from "../context/AppContext";
@@ -27,14 +28,16 @@ export default function MotDePasseOublie() {
     <main className="auth-page">
       <div className="auth-brand">
         <h1>Retrouver votre accès.</h1>
-        <p>Recevez un lien pour choisir un nouveau mot de passe.</p>
+        <p>{MESSAGING_ENABLED ? "Recevez un lien pour choisir un nouveau mot de passe." : "La réinitialisation par e-mail est temporairement indisponible."}</p>
       </div>
       <section className="auth-card">
         <button className="back-link" onClick={() => go("connexion")}>
           ← Retour à la connexion
         </button>
         <h2>Mot de passe oublié</h2>
-        {API_MODE ? (
+        {!MESSAGING_ENABLED ? (
+          <p className="info-message">L’envoi de liens par e-mail n’est pas encore activé.</p>
+        ) : API_MODE ? (
           <form onSubmit={submit}>
             <label>
               Adresse e-mail du compte

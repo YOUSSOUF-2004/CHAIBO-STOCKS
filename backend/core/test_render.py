@@ -65,3 +65,47 @@ class BootstrapTests(TestCase):
         with self.assertRaises(CommandError):call_command('bootstrap_admin',stdout=io.StringIO())
         user.refresh_from_db()
         self.assertFalse(user.is_staff)
+
+@override_settings(SECURE_SSL_REDIRECT=False,PHOTOS_ENABLED=False,MESSAGING_ENABLED=False)
+class DisabledFeaturesTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.user=User.objects.create_user('+23566003344','Client-Password!84',name='Client',email='client@example.test')
+        self.client=APIClient()
+        self.client.force_authenticate(self.user)
+
+    @patch('core.views.send_mail')
+    @patch('core.contact.EmailMessage.send')
+    def test_messaging_refuses_requests_without_sending_or_storing(self,contact_send,reset_send):
+        from .models import ContactMessage
+        self.assertEqual(self.client.post('/api/auth/password-reset/',{'email':self.user.email}).status_code,503)
+        self.assertEqual(self.client.post('/api/contact/',{},format='json').status_code,503)
+        self.assertFalse(ContactMessage.objects.exists())
+        reset_send.assert_not_called()
+        contact_send.assert_not_called()
+
+    @patch('django.core.files.storage.FileSystemStorage._save',side_effect=AssertionError('No disk uploads'))
+    def test_photos_are_hidden_and_uploads_refused_but_profile_is_editable(self,save):
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self.user.photo='existing-photo.jpg'
+        self.user.save()
+        self.assertEqual(self.client.get('/api/me/').data['photo'],'')
+        self.assertEqual(self.client.get(f'/api/users/{self.user.pk}/photo/').status_code,404)
+        output=io.BytesIO()
+        Image.new('RGB',(10,10)).save(output,'PNG')
+        upload=SimpleUploadedFile('photo.png',output.getvalue(),content_type='image/png')
+        self.assertEqual(self.client.patch('/api/me/',{'photo':upload},format='multipart').status_code,400)
+        self.assertEqual(self.client.patch('/api/me/',{'remove_photo':True},format='json').status_code,400)
+        self.assertEqual(self.client.patch('/api/me/',{'name':'Nouveau nom'},format='json').status_code,200)
+        save.assert_not_called()
+
+class RenderWithoutProvidersTests(SimpleTestCase):
+    def test_render_import_ignores_old_s3_choice_when_photos_disabled(self):
+        import subprocess,sys
+        env={**os.environ,'CHAIBO_RENDER':'1','DJANGO_DEBUG':'0','DJANGO_SECRET_KEY':'x'*64,'MEDIA_STORAGE':'s3','CHAIBO_PHOTOS_ENABLED':'0','CHAIBO_MESSAGING_ENABLED':'0','POSTGRES_SSLMODE':'require'}
+        for key in ['S3_ENDPOINT_URL','S3_REGION_NAME','S3_ACCESS_KEY_ID','S3_SECRET_ACCESS_KEY','S3_BUCKET_NAME']:
+            env[key]=''
+        result=subprocess.run([sys.executable,'-c',"from config import settings; assert not settings.PHOTOS_ENABLED; assert not settings.MESSAGING_ENABLED; assert settings.EMAIL_BACKEND == 'django.core.mail.backends.dummy.EmailBackend'; print('Render sans fournisseurs : OK')"],env=env,cwd=Path(__file__).resolve().parent.parent,capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)

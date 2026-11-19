@@ -106,12 +106,18 @@ DATABASES['default']['OPTIONS'] = {'sslmode':ssl_mode}
 # Keep Django's financial tables outside Supabase's exposed public schema.
 CHAIBO_DB_SCHEMA = 'chaibo_private' if IS_RENDER else ''
 
-if os.getenv('MEDIA_STORAGE','local') == 's3':
+# Photos and outbound messaging are optional; Render starts without provider keys.
+PHOTOS_ENABLED = os.getenv('CHAIBO_PHOTOS_ENABLED', '0' if IS_RENDER else '1') == '1'
+MESSAGING_ENABLED = os.getenv('CHAIBO_MESSAGING_ENABLED', '0' if IS_RENDER else '1') == '1'
+if not MESSAGING_ENABLED:
+    EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+
+if PHOTOS_ENABLED and os.getenv('MEDIA_STORAGE','local') == 's3':
     needed = ['S3_ENDPOINT_URL','S3_ACCESS_KEY_ID','S3_SECRET_ACCESS_KEY','S3_BUCKET_NAME','S3_REGION_NAME']
     if any(not os.getenv(name) for name in needed):
         raise ImproperlyConfigured('Configurer les cinq variables S3 du stockage privé.')
     if not os.environ['S3_ENDPOINT_URL'].startswith('https://'):
         raise ImproperlyConfigured('Le stockage privé doit utiliser HTTPS.')
     STORAGES['default'] = {'BACKEND':'storages.backends.s3.S3Storage','OPTIONS':{'endpoint_url':os.environ['S3_ENDPOINT_URL'],'access_key':os.environ['S3_ACCESS_KEY_ID'],'secret_key':os.environ['S3_SECRET_ACCESS_KEY'],'bucket_name':os.environ['S3_BUCKET_NAME'],'region_name':os.environ['S3_REGION_NAME'],'addressing_style':'path','signature_version':'s3v4','default_acl':None,'file_overwrite':False,'querystring_auth':True}}
-elif IS_RENDER:
+elif PHOTOS_ENABLED and IS_RENDER:
     raise ImproperlyConfigured('Render utilise un disque temporaire : configurer MEDIA_STORAGE=s3 pour conserver les photos.')

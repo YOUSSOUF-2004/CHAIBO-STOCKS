@@ -1,3 +1,4 @@
+import { MESSAGING_ENABLED } from "../services/features";
 import { API_MODE } from "../services/api";
 import React from "react";
 import {
@@ -56,6 +57,7 @@ export default function DashboardLayout() {
           <div className="help-box">
             <Headphones />
             <b>Besoin d’aide ?</b>
+            {MESSAGING_ENABLED ? <>
             <p>Notre équipe vous accompagne.</p>
             <Link to="/contact">
               Contacter le support <ArrowUpRight size={14} />
@@ -68,6 +70,7 @@ export default function DashboardLayout() {
             >
               WhatsApp
             </a>
+            </> : <p>Messagerie temporairement indisponible.</p>}
           </div>
           <button
             className="navitem"

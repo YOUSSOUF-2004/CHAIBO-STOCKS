@@ -3,6 +3,7 @@ import { Camera, Trash2 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { prepareProfilePhoto } from "../utils/profilePhoto";
 import Avatar from "./Avatar";
+import { PHOTOS_ENABLED } from "../services/features";
 
 export default function ProfilePhoto() {
   const { profile, setProfile, persist, notify, apiMode, savePhoto } = useApp();
@@ -67,6 +68,12 @@ export default function ProfilePhoto() {
       setError("Impossible d’enregistrer la suppression. Réessayez.");
     }
   }
+  if (!PHOTOS_ENABLED) return (
+    <div className="profile-photo-editor">
+      <Avatar profile={profile} className="big-avatar" />
+      <small className="photo-help">L’ajout de photos est temporairement indisponible.</small>
+    </div>
+  );
   return (
     <div className="profile-photo-editor">
       <Avatar profile={profile} className="big-avatar" />

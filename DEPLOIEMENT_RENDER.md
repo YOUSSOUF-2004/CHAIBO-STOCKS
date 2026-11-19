@@ -2,6 +2,14 @@
 
 Cette version fournit les adaptations Render. Elle ne crée pas vos comptes Render/Supabase/Brevo et ne transfère pas les données de votre PostgreSQL local.
 
+## Version simplifiée actuelle
+
+Les photos et la messagerie sont désactivées par défaut sur Render. Aucun compte Brevo ni clé S3 n’est requis. Les profils affichent des initiales ; les formulaires de contact et de réinitialisation par e-mail sont indisponibles. Les comptes, soldes et opérations restent dans PostgreSQL Supabase.
+
+Les anciennes variables `MEDIA_STORAGE=s3` et `S3_*` n’empêchent plus le démarrage lorsque les photos sont désactivées. Ajouter explicitement `CHAIBO_PHOTOS_ENABLED=0` et `CHAIBO_MESSAGING_ENABLED=0` dans Render. Révoquer toute clé S3 précédemment partagée en capture.
+
+Les instructions de stockage et d’e-mail ci-dessous servent uniquement à une réactivation future. Pour les réactiver, configurer les fournisseurs, passer les variables serveur correspondantes à `1` et reconstruire React avec `VITE_PHOTOS_ENABLED=1` et/ou `VITE_MESSAGING_ENABLED=1`. Ces deux indicateurs frontend sont désactivés par défaut, y compris dans Docker.
+
 ## A. Mettre à jour le dépôt GitHub
 
 Vous avez deux dossiers : le projet de travail et le clone GitHub. Les fichiers doivent être ajoutés au **clone GitHub** utilisé par Render, par exemple `C:\Users\youss\chaibo-stock-github`.
@@ -27,14 +35,14 @@ Avant le commit, vérifier que seuls les `.env.example` et `render.env.example` 
 2. Choisir une région proche du service Render (idéalement Europe/Frankfurt si proposée).
 3. Définir un mot de passe PostgreSQL fort et le conserver dans un gestionnaire de mots de passe.
 4. Ouvrir **Connect → Session pooler**. Utiliser l’hôte indiqué, le port **5432**, la base `postgres`, l’utilisateur `postgres.REFERENCE_PROJET` et le mot de passe choisi. Cette connexion fonctionne sur un réseau IPv4. Ne pas choisir le transaction pooler 6543 pour cette configuration.
-5. Dans **Storage**, créer un bucket **`profile-photos`**, avec **Public désactivé**.
+5. **Facultatif, photos désactivées par défaut.** Dans **Storage**, créer un bucket **`profile-photos`**, avec **Public désactivé**.
 6. Dans les paramètres Storage / S3, créer une paire de clés S3. Conserver l’Access key ID et la Secret access key. Copier aussi l’endpoint S3 et la région fournis par Supabase.
 
 Ces clés S3 sont privées : elles ne doivent jamais apparaître dans React, une variable `VITE_`, un fichier GitHub public ou une capture d’écran. Django les utilise pour servir la photo uniquement au propriétaire et à l’administrateur.
 
 Au démarrage, Django crée ses tables dans le schéma **`chaibo_private`**, séparé du schéma public de Supabase. Ne pas ajouter ce schéma aux schémas exposés par la Data API Supabase et ne pas donner accès aux rôles `anon`/`authenticated`. La connexion utilise un rôle PostgreSQL pouvant créer ce schéma. L’authentification reste celle de Django ; Supabase Auth n’est pas utilisé.
 
-## C. Configurer les e-mails
+## C. Configurer les e-mails (facultatif, désactivés par défaut)
 
 Render Free bloque les ports SMTP courants. La connexion Gmail SMTP utilisée en local ne convient donc pas à cette offre.
 
@@ -75,8 +83,7 @@ Variables nécessaires :
 - `DJANGO_SECRET_KEY` : secret aléatoire privé d’au moins 50 caractères. Vous pouvez le générer sur votre ordinateur avec `py -c "import secrets; print(secrets.token_urlsafe(64))"`, puis le coller directement dans Render, sans le publier ni l’envoyer dans le chat. Ne pas changer à chaque redéploiement.
 - `DJANGO_DEBUG=0`.
 - `POSTGRES_HOST`, `POSTGRES_PORT=5432`, `POSTGRES_DB=postgres`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE=require` depuis Supabase Session pooler.
-- `MEDIA_STORAGE=s3`, `S3_ENDPOINT_URL`, `S3_REGION_NAME`, `S3_BUCKET_NAME=profile-photos`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` depuis Supabase Storage.
-- Les variables Brevo décrites plus haut.
+- `CHAIBO_PHOTOS_ENABLED=0` et `CHAIBO_MESSAGING_ENABLED=0`. Les variables S3 et Brevo ne sont pas nécessaires dans cette version.
 
 Render fournit automatiquement `RENDER_EXTERNAL_HOSTNAME`. Le code l’ajoute aux hôtes autorisés et aux origines CSRF et l’utilise pour les liens de réinitialisation. Il n’est pas nécessaire d’inventer votre URL Render avant la création du service.
 
@@ -104,9 +111,9 @@ Attendre la fin des logs. Vérifier successivement :
 2. `/api/health/` retourne `{"status":"ok"}`.
 3. `/api/csrf/` retourne un token, sans redirection en boucle.
 4. Connexion client et administrateur, puis inscription d’un client de test.
-5. Upload d’une photo : le bucket reste privé ; elle persiste après redéploiement.
-6. Réinitialisation du mot de passe : vérifier la réception réelle de l’e-mail et l’ouverture du lien HTTPS.
-7. Envoi d’un contact de test : message visible dans `/admin/`, même si la notification échoue.
+5. Vérifier que le profil affiche des initiales et ne propose pas d’ajout de photo.
+6. Vérifier que les pages de contact et de réinitialisation indiquent leur indisponibilité, sans formulaire ni lien WhatsApp/e-mail.
+7. Vérifier qu’un dépôt de test peut être validé par l’administrateur.
 
 Ne pas publier les logs contenant un lien de réinitialisation ou des secrets. Si le déploiement échoue, partager uniquement le message d’erreur en masquant les valeurs privées.
 

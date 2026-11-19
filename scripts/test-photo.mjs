@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 await build({
   entryPoints: ["src/App.jsx"],
   bundle: true,
-  define: { "import.meta.env.VITE_API_MODE": '"demo"' },
+  define: { "import.meta.env.VITE_PHOTOS_ENABLED": '"1"', "import.meta.env.VITE_MESSAGING_ENABLED": '"1"', "import.meta.env.VITE_API_MODE": '"demo"' },
   platform: "node",
   format: "esm",
   packages: "external",

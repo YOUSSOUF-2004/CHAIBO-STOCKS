@@ -1,3 +1,4 @@
+import { MESSAGING_ENABLED } from "../services/features";
 import React, { useState, useRef } from "react";
 import { Mail, MessageCircle, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -54,6 +55,15 @@ export default function Contact() {
       setBusy(false);
     }
   }
+  if (!MESSAGING_ENABLED) return (
+    <main className="contact-page">
+      <div className="contact-heading">
+        <h1>Contact</h1>
+        <p>Les messages, les e-mails et WhatsApp sont temporairement indisponibles.</p>
+        <Link className="btn" to="/accueil">Retour à l’accueil</Link>
+      </div>
+    </main>
+  );
   return (
     <main className="contact-page">
       <div className="contact-heading">

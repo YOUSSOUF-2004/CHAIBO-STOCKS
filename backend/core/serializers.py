@@ -1,5 +1,6 @@
 import io
 import warnings
+from django.conf import settings
 from PIL import Image, ImageOps, UnidentifiedImageError
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -23,7 +24,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_role(self, obj):
         return 'admin' if obj.is_staff else 'client'
     def get_photo(self, obj):
-        return f'/api/users/{obj.pk}/photo/?v={obj.updated_at.timestamp()}' if obj.photo else ''
+        return f'/api/users/{obj.pk}/photo/?v={obj.updated_at.timestamp()}' if settings.PHOTOS_ENABLED and obj.photo else ''
     class Meta:
         model = User
         fields = ['id','name','phone','email','photo','role','balance','active']
@@ -57,12 +58,16 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     photo = serializers.ImageField(required=False,write_only=True)
     remove_photo = serializers.BooleanField(required=False,write_only=True,default=False)
     def validate(self, attrs):
+        if not settings.PHOTOS_ENABLED and ('photo' in self.initial_data or 'remove_photo' in self.initial_data):
+            raise serializers.ValidationError('Les photos de profil sont temporairement désactivées.')
         if any(k not in ['name','email','photo','remove_photo'] for k in self.initial_data):
             raise serializers.ValidationError('Seuls le nom, l’e-mail et la photo peuvent être modifiés ici.')
         if attrs.get('photo') and attrs.get('remove_photo'):
             raise serializers.ValidationError('Choisissez l’ajout ou la suppression de la photo.')
         return attrs
     def validate_photo(self, upload):
+        if not settings.PHOTOS_ENABLED:
+            raise serializers.ValidationError('Les photos de profil sont temporairement désactivées.')
         if upload.size > 5*1024*1024:
             raise serializers.ValidationError('Photo trop volumineuse : 5 Mo maximum.')
         try:

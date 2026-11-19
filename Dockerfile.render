@@ -4,6 +4,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 ENV VITE_API_MODE=api
+ARG VITE_PHOTOS_ENABLED=0
+ARG VITE_MESSAGING_ENABLED=0
 ARG VITE_SUPPORT_EMAIL=youssoufchaiboabakaradam@gmail.com
 ARG VITE_SUPPORT_WHATSAPP=23566009695
 RUN npm run build

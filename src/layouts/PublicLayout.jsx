@@ -3,6 +3,7 @@ import {
   SUPPORT_PHONE,
   WHATSAPP_URL,
 } from "../services/support";
+import { MESSAGING_ENABLED } from "../services/features";
 import { API_MODE } from "../services/api";
 import React from "react";
 import { ArrowUpRight, ShieldCheck, User, Menu } from "lucide-react";
@@ -132,12 +133,14 @@ export default function PublicLayout() {
           </div>
           <div>
             <b>Restons en contact</b>
+            {MESSAGING_ENABLED ? <>
             <Link to="/contact">Formulaire de contact</Link>
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
               Support WhatsApp
             </a>
             <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
             <a href={`tel:+${SUPPORT_PHONE}`}>+{SUPPORT_PHONE}</a>
+            </> : <span>Messagerie temporairement indisponible</span>}
             <span>N’Djaména, Tchad</span>
           </div>
           <div className="footer-message">

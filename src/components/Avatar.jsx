@@ -1,4 +1,5 @@
 import React from "react";
+import { PHOTOS_ENABLED } from "../services/features";
 export default function Avatar({ profile, className = "user-avatar" }) {
   const initials = (profile.name || "Utilisateur")
     .trim()
@@ -9,7 +10,7 @@ export default function Avatar({ profile, className = "user-avatar" }) {
     .toUpperCase();
   return (
     <span className={className}>
-      {profile.photo ? (
+      {PHOTOS_ENABLED && profile.photo ? (
         <img
           className="avatar-photo"
           src={profile.photo}

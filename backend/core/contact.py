@@ -6,6 +6,8 @@ logger = logging.getLogger('core')
 
 def notify_support(pk):
     # Called after commit: SMTP failure never loses the customer's saved message.
+    if not settings.MESSAGING_ENABLED:
+        return
     message = ContactMessage.objects.filter(pk=pk).first()
     if message is None or message.notification_sent or not settings.SUPPORT_EMAIL:
         return
